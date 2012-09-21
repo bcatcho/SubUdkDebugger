@@ -8,9 +8,11 @@
 #include <vcclr.h>
 #include <gcroot.h>
 #include "SubUdkDebugger.h"
+#include "IpcConduitController.h"
 
 using namespace System;
 using namespace System::IO;
+using namespace IpcConduit;
 
 
 #define _LOG
@@ -22,71 +24,61 @@ CallbackPointer callbackPointer = nullptr;
 bool debugging = false;
 int g_WatchId[3];
 int eventNum = 0;
+gcroot<IpcConduitController ^> ipcController;
 
 
-void WriteLog(String^ text)
-{
-#ifdef _LOG
-	if (_log)
-	{
-		String^ logText = String::Format("[{0}] {1}", DateTime::Now.ToString("MM/dd/yyyy h:mm tt"), text);
-		_log->WriteLine(logText);
-		_log->Flush();
-	}
-#endif
-}
-
-
-void SendCommand(String^ text)
-{
-	if (!callbackPointer)
-	{
-		WriteLog("Warning! Callback Pointer is empty!");
-		return;
-	}
-	char* szCommand = (char*)(System::Runtime::InteropServices::Marshal::StringToHGlobalAnsi(text)).ToPointer();
-
-	WriteLog(String::Format("Command: {0}", text));
-	if (callbackPointer) {
-		callbackPointer(szCommand); 
-	}
-
-	System::Runtime::InteropServices::Marshal::FreeHGlobal(IntPtr((void*)szCommand));
-}
 
 void SetupLog()
 {
 	_log = gcnew StreamWriter("debugger.log", true);
-	_log->WriteLine("\nDebugger started [{0}]", DateTime::Now.ToString("MM/dd/yyyy h:mm tt"));
-	_log->WriteLine("==================================================================");
 }
 
-
-void UnhandledExceptionHandler(Object^ sender, UnhandledExceptionEventArgs^ e)
-{
-        try
-        {
-			WriteLog( e->ExceptionObject->ToString() );
-        }
-        finally
-        {
-            throw (Exception^) e->ExceptionObject;
-        }
-}
-
-[STAThread]
-void WorkerThreadFunction()
-{
-        AppDomain::CurrentDomain->UnhandledException += gcnew UnhandledExceptionEventHandler(&UnhandledExceptionHandler);
-}
 
 extern "C"
 {
+	IpcConduitController^ IpcController()
+	{
+		auto autoIpcController = (IpcConduitController^)ipcController;
+
+		if (autoIpcController == nullptr)
+		{
+			ipcController = gcnew IpcConduitController();
+		}
+
+		return ipcController;
+	}
+
+	void WriteLog(String^ text)
+	{
+#ifdef _LOG
+		if (_log)
+		{
+			IpcController()->WriteLog(text);
+		}
+#endif
+	}
+
+	void SendCommand(String^ text)
+	{
+		if (!callbackPointer)
+		{
+			WriteLog("Warning! Callback Pointer is empty!");
+			return;
+		}
+		char* szCommand = (char*)(System::Runtime::InteropServices::Marshal::StringToHGlobalAnsi(text)).ToPointer();
+
+		WriteLog(String::Format("Command: {0}", text));
+		if (callbackPointer) {
+			callbackPointer(szCommand); 
+		}
+
+		System::Runtime::InteropServices::Marshal::FreeHGlobal(IntPtr((void*)szCommand));
+	}
+
 	void SetCallback(void* callbackFunc)
 	{
 		if (!debugging)
 		{
-			SetupLog();
 			debugging = true;
 		}
 		callbackPointer = (CallbackPointer)callbackFunc;
@@ -97,6 +89,7 @@ extern "C"
 	{
 		WriteLog("ShowDllForm");
 		SendCommand("go");
+		IpcController();
 	}
 
 	void BuildHierarchy()
@@ -172,8 +165,6 @@ extern "C"
 		if (String::Compare(logString, "Log: Detaching UnrealScript Debugger (currently detached)") == 0)
 		{
 			WriteLog("Shutting Down Debugger Interface!");
-			_log->Close();
-			_log = nullptr;
 			callbackPointer = NULL;
 			debugging = false;
 		}
