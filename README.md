@@ -1,9 +1,8 @@
-
 ## Here writhers a prototype UDK Debugger Interface for Sublime Text 2
 
 There are three main parts to this project:
 
-1. A Debugger interface that conforms to the [http://udn.epicgames.com/Three/DebuggerInterface.html](Udk Debugger Interface)
+1. A Debugger interface that conforms to the [Unreal Debugger Interface](http://udn.epicgames.com/Three/DebuggerInterface.html)
    - It is written in C# but is wrapped by CLR enabled c++
    - Other than logging, the main responsibility of this DLL is to connect UDK.exe to any other ZeroMQ subscriber on the same machine (local for now).
 2. A test client
