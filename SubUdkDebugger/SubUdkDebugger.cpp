@@ -8,7 +8,6 @@
 #include <vcclr.h>
 #include <gcroot.h>
 #include "SubUdkDebugger.h"
-#include "IpcConduitController.h"
 
 using namespace System;
 using namespace System::IO;
@@ -19,19 +18,11 @@ using namespace IpcConduit;
 
 
 typedef void (*CallbackPointer)(const char*);
-gcroot<StreamWriter^> _log;
 CallbackPointer callbackPointer = nullptr;
 bool debugging = false;
 int g_WatchId[3];
 int eventNum = 0;
 gcroot<IpcConduitController ^> ipcController;
-
-
-
-void SetupLog()
-{
-	_log = gcnew StreamWriter("debugger.log", true);
-}
 
 
 extern "C"
@@ -51,10 +42,7 @@ extern "C"
 	void WriteLog(String^ text)
 	{
 #ifdef _LOG
-		if (_log)
-		{
-			IpcController()->WriteLog(text);
-		}
+		IpcController()->WriteLog(text);
 #endif
 	}
 
@@ -89,7 +77,6 @@ extern "C"
 	{
 		WriteLog("ShowDllForm");
 		SendCommand("go");
-		IpcController();
 	}
 
 	void BuildHierarchy()
@@ -162,11 +149,13 @@ extern "C"
 		String^ logString = gcnew String(text);
 
 		WriteLog(String::Format("AddLineToLog {0}", logString));
+
 		if (String::Compare(logString, "Log: Detaching UnrealScript Debugger (currently detached)") == 0)
 		{
 			WriteLog("Shutting Down Debugger Interface!");
 			callbackPointer = NULL;
 			debugging = false;
+			IpcController()->StopDebugger();
 		}
 	}
 

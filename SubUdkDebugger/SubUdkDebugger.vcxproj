@@ -85,7 +85,6 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="IpcConduitController.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Stdafx.h" />
     <ClInclude Include="SubUdkDebugger.h" />
@@ -102,17 +101,17 @@
     <ClCompile Include="SubUdkDebugger.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\IpcConduit\bin\Debug\IpcConduit.dll" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\IpcConduit\IpcConduit.csproj">
       <Project>{cb6a9688-8aa5-4796-a1a9-c168f6d68289}</Project>
       <Private>true</Private>
       <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
+      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
-      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\IpcConduit\bin\Debug\IpcConduit.dll" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
