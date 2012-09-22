@@ -88,6 +88,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="Stdafx.h" />
     <ClInclude Include="SubUdkDebugger.h" />
+    <ClInclude Include="UdkCallbackBridge.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
@@ -99,6 +100,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="SubUdkDebugger.cpp" />
+    <ClCompile Include="UdkCallbackBridge.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\IpcConduit\bin\Debug\IpcConduit.dll" />

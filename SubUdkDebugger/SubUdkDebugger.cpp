@@ -1,181 +1,133 @@
-// This is the main DLL file.
-
 #include "stdafx.h"
-
-// This is the main DLL file.
-
-#include "stdafx.h"
-#include <vcclr.h>
 #include <gcroot.h>
 #include "SubUdkDebugger.h"
+#include "UdkCallbackBridge.h"
 
 using namespace System;
-using namespace System::IO;
 using namespace IpcConduit;
 
 
-#define _LOG
-
-
 typedef void (*CallbackPointer)(const char*);
-CallbackPointer callbackPointer = nullptr;
-bool debugging = false;
-int g_WatchId[3];
-int eventNum = 0;
 gcroot<IpcConduitController ^> ipcController;
-
 
 extern "C"
 {
-	IpcConduitController^ IpcController()
+	IpcConduitController^ ipcConduit()
 	{
-		auto autoIpcController = (IpcConduitController^)ipcController;
-
-		if (autoIpcController == nullptr)
-		{
+		auto testIpcForNull = (IpcConduitController^)ipcController;
+		if ( testIpcForNull == nullptr )
 			ipcController = gcnew IpcConduitController();
-		}
 
 		return ipcController;
 	}
 
 	void WriteLog(String^ text)
 	{
-#ifdef _LOG
-		IpcController()->WriteLog(text);
-#endif
-	}
-
-	void SendCommand(String^ text)
-	{
-		if (!callbackPointer)
-		{
-			WriteLog("Warning! Callback Pointer is empty!");
-			return;
-		}
-		char* szCommand = (char*)(System::Runtime::InteropServices::Marshal::StringToHGlobalAnsi(text)).ToPointer();
-
-		WriteLog(String::Format("Command: {0}", text));
-		if (callbackPointer) {
-			callbackPointer(szCommand); 
-		}
-
-		System::Runtime::InteropServices::Marshal::FreeHGlobal(IntPtr((void*)szCommand));
+		ipcConduit()->WriteLog(text);
 	}
 
 	void SetCallback(void* callbackFunc)
 	{
-		if (!debugging)
-		{
-			debugging = true;
-		}
-		callbackPointer = (CallbackPointer)callbackFunc;
-		WriteLog("SetCallback");
+		UdkCallbackBridge^ bridge = gcnew UdkCallbackBridge((CallbackPointer)callbackFunc);
+		ipcConduit()->SetCallbackBridge(bridge);
 	}
 
 	void ShowDllForm()
 	{
-		WriteLog("ShowDllForm");
-		SendCommand("go");
+		ipcConduit()->ShowDllForm();
 	}
 
 	void BuildHierarchy()
 	{
-		//WriteLog("BuildHierarchy");
+		ipcConduit()->BuildHierarchy();
 	}
 
 	void ClearHierarchy()
 	{
-		//WriteLog("ClearHierarchy");
+		ipcConduit()->ClearHierarchy();
 	}
 
 	void AddClassToHierarchy(const char* className)
 	{
-		//WriteLog("AddClassToHierarchy");
+		String^ name = gcnew String(className);
+		ipcConduit()->AddClassToHierarchy(name);
 	}
 
 	void ClearWatch(int watchType)
 	{
-		g_WatchId[watchType] = 0;
-		//WriteLog("ClearWatch");
+		ipcConduit()->ClearWatch(watchType);
 	}
 
 	void ClearAWatch(int watchType)
 	{
-		g_WatchId[watchType] = 0;
-		//WriteLog("ClearAWatch");
+		ipcConduit()->ClearAWatch( watchType );
 	}
 
 	int AddAWatch(int watchType, int parentIndex, const char* varName, const char* varValue)
 	{
-		int nResult = 0;
-		nResult = ++g_WatchId[watchType];
-		//WriteLog("AddAWatch");
-		return nResult;
+		String^ name = gcnew String(varName);
+		String^ val = gcnew String(varName);
+		return ipcConduit()->AddAWatch(watchType, parentIndex, name, val);
 	}
 
 	void LockList(int watchList)
 	{
-		//WriteLog("LockList");
+		ipcConduit()->LockList(watchList);
 	}
 
 	void UnlockList(int watchList)
 	{
-		//WriteLog("UnlockList");
+		ipcConduit()->UnlockList(watchList);
 	}
 
 	void AddBreakpoint(const char* className, int lineNo)
 	{
-		//WriteLog("AddBreakpoint");
+		String^ name = gcnew String(className);
+		ipcConduit()->AddBreakpoint(name, lineNo);
 	}
 
 	void RemoveBreakpoint(const char* className, int lineNo)
 	{
-		//WriteLog("RemoveBreakpoint");
+		String^ name = gcnew String(className);
+		ipcConduit()->RemoveBreakpoint(name, lineNo);
 	}
 
 	void EditorLoadClass(const char* className)
 	{
-		//WriteLog("EditorLoadClass");
+		String^ name = gcnew String(className);
+		ipcConduit()->EditorLoadClass(name);
 	}
 
 	void EditorGotoLine(int lineNo, int highlight)
 	{
-		//WriteLog("EditorGotoLine");
+		ipcConduit()->EditorGotoLine( lineNo, highlight );
 	}
 
 	void AddLineToLog(const char* text)
 	{
-		String^ logString = gcnew String(text);
-
-		WriteLog(String::Format("AddLineToLog {0}", logString));
-
-		if (String::Compare(logString, "Log: Detaching UnrealScript Debugger (currently detached)") == 0)
-		{
-			WriteLog("Shutting Down Debugger Interface!");
-			callbackPointer = NULL;
-			debugging = false;
-			IpcController()->StopDebugger();
-		}
+		String^ managedText = gcnew String(text);
+		ipcConduit()->AddLineToLog( managedText );
 	}
 
 	void CallStackClear()
 	{
-		//WriteLog("CallStackClear");
+		ipcConduit()->CallStackClear();
 	}
 
 	void CallStackAdd(const char* callStackEntry)
 	{
-		//WriteLog("CallStackAdd");
+		String^ callStackEntryString = gcnew String(callStackEntry);
+		ipcConduit()->CallStackAdd(callStackEntryString);
 	}
 
 	void SetCurrentObjectName(const char* objectName)
 	{
-		//WriteLog("SetCurrentObjectName");
+		String^ name = gcnew String(objectName);
+		ipcConduit()->SetCurrentObjectName(name);
 	}
 
 	void DebugWindowState(int stateCode)
 	{
-		//WriteLog("DebugWindowState");
+		ipcConduit()->DebugWindowState(stateCode);
 	}
 }

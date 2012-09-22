@@ -5,3 +5,5 @@
 #pragma once
 
 #include <windows.h>
+#include "atlbase.h"
+#include "atlconv.h"
